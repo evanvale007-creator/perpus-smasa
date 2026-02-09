@@ -3,116 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Perpus SMAN 1 Magetan</title>
+    <title>Sistem Perpus SMAN 1 Magetan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-        .navbar { background-color: #004d40 !important; }
-        .card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: linear-gradient(90deg, #004d40, #00796b); }
+        .card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .table thead { background-color: #343a40; color: white; }
     </style>
 </head>
 <body onload="muatAwal()">
 
 <nav class="navbar navbar-dark shadow-sm mb-4">
-    <div class="container">
-        <span class="navbar-brand h1"><i class="bi bi-book-half me-2"></i> SMASA LIB - Admin</span>
+    <div class="container text-center">
+        <span class="navbar-brand fw-bold mx-auto"><i class="bi bi-book-half me-2"></i> PERPUSTAKAAN SMAN 1 MAGETAN</span>
     </div>
 </nav>
 
 <div class="container">
-    <div class="card p-4 mb-4">
-        <h5 class="mb-3">Input Peminjaman Baru</h5>
-        <div class="row g-3">
-            <div class="col-md-5"><input type="text" id="namaSiswa" class="form-control" placeholder="Nama Siswa"></div>
-            <div class="col-md-5">
-                <input type="text" id="judulBuku" list="listBuku" class="form-control" placeholder="Judul Buku">
-                <datalist id="listBuku"></datalist>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card p-4 sticky-top" style="top: 20px;">
+                <h5 class="mb-3"><i class="bi bi-plus-circle text-success me-2"></i>Pinjam Buku</h5>
+                <div class="mb-3">
+                    <label class="form-label small">Nama Siswa</label>
+                    <input type="text" id="namaSiswa" class="form-control" placeholder="Nama lengkap">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">Judul Buku</label>
+                    <input type="text" id="judulBuku" list="listBuku" class="form-control" placeholder="Cari buku...">
+                    <datalist id="listBuku"></datalist>
+                </div>
+                <button id="btnPinjam" onclick="pinjamBuku()" class="btn btn-primary w-100 fw-bold">CATAT PINJAMAN</button>
             </div>
-            <div class="col-md-2"><button id="btnPinjam" onclick="pinjamBuku()" class="btn btn-primary w-100">Pinjam</button></div>
         </div>
-    </div>
 
-    <div class="card p-4">
-        <h5 class="mb-3">Daftar Peminjaman Aktif & Riwayat</h5>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nama Siswa</th>
-                        <th>Judul Buku</th>
-                        <th>Tgl Pinjam</th>
-                        <th>Status</th>
-                        <th>Tgl Kembali</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelPeminjaman"></tbody>
-            </table>
+        <div class="col-lg-8">
+            <div class="card p-4">
+                <h5 class="mb-3"><i class="bi bi-clock-history text-primary me-2"></i>Riwayat Peminjaman</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Siswa</th>
+                                <th>Buku</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelPeminjaman"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // GANTI DENGAN URL WEB APP GOOGLE SCRIPT ANDA
     const API_URL = "https://script.google.com/macros/s/AKfycbx7u1pEzkfSjZD1kztJEzMDYGUl5zECdxZm338jjvh7zA-oHj0NUoaxEaRgZ3snjr58/exec";
 
-    async function muatAwal() {
+    function muatAwal() {
         muatDaftarBuku();
         muatDataPeminjam();
     }
 
     async function muatDaftarBuku() {
-        const res = await fetch(API_URL + "?action=getBuku");
-        const data = await res.json();
-        const list = document.getElementById('listBuku');
-        data.forEach(judul => { let opt = document.createElement('option'); opt.value = judul; list.appendChild(opt); });
+        try {
+            const res = await fetch(API_URL + "?action=getBuku");
+            const data = await res.json();
+            const list = document.getElementById('listBuku');
+            data.forEach(judul => {
+                let opt = document.createElement('option');
+                opt.value = judul;
+                list.appendChild(opt);
+            });
+        } catch (e) { console.log("Gagal muat daftar buku"); }
     }
 
     async function muatDataPeminjam() {
         const tabel = document.getElementById('tabelPeminjaman');
-        tabel.innerHTML = "<tr><td colspan='6' class='text-center'>Memuat data...</td></tr>";
-        const res = await fetch(API_URL + "?action=getPeminjaman");
-        const data = await res.json();
-        
-        tabel.innerHTML = data.map(row => {
-            const isDipinjam = row[4] === "Dipinjam";
-            return `
-                <tr>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td><span class="badge ${isDipinjam ? 'bg-warning text-dark' : 'bg-success'}">${row[4]}</span></td>
-                    <td>${row[5] || "-"}</td>
-                    <td>
-                        ${isDipinjam ? `<button class="btn btn-sm btn-outline-success" onclick="kembalikanBuku('${row[0]}')">Selesai</button>` : `<i class="bi bi-check-all text-success"></i>`}
-                    </td>
-                </tr>
-            `;
-        }).reverse().join('');
+        tabel.innerHTML = "<tr><td colspan='4' class='text-center'>Memuat data...</td></tr>";
+        try {
+            const res = await fetch(API_URL + "?action=getPeminjaman");
+            const data = await res.json();
+            tabel.innerHTML = data.map(row => {
+                const isDipinjam = row[4] === "Dipinjam";
+                return `
+                    <tr>
+                        <td><strong>${row[1]}</strong><br><small class="text-muted">${row[3]}</small></td>
+                        <td>${row[2]}</td>
+                        <td><span class="badge ${isDipinjam ? 'bg-warning text-dark' : 'bg-success'}">${row[4]}</span></td>
+                        <td>
+                            <div class="btn-group">
+                                ${isDipinjam ? `<button class="btn btn-sm btn-success" onclick="kembali('${row[0]}')"><i class="bi bi-check2"></i></button>` : ``}
+                                <button class="btn btn-sm btn-outline-danger" onclick="hapus('${row[0]}')"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).reverse().join('');
+        } catch (e) { tabel.innerHTML = "Gagal memuat data."; }
     }
 
     async function pinjamBuku() {
         const nama = document.getElementById('namaSiswa').value;
         const buku = document.getElementById('judulBuku').value;
-        if(!nama || !buku) return alert("Isi data!");
+        if(!nama || !buku) return alert("Lengkapi data!");
         
-        await fetch(API_URL, {
+        document.getElementById('btnPinjam').disabled = true;
+        const res = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ action: "pinjam", nama: nama, buku: buku })
         });
+        const hasil = await res.text();
+        if(hasil.includes("ERROR_DIPINJAM")) alert("Buku masih dipinjam!");
         location.reload();
     }
 
-    async function kembalikanBuku(id) {
-        if(!confirm("Buku sudah dikembalikan?")) return;
-        await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "kembali", id: id })
-        });
+    async function kembali(id) {
+        if(!confirm("Buku sudah kembali?")) return;
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "kembali", id: id }) });
+        location.reload();
+    }
+
+    async function hapus(id) {
+        if(!confirm("Hapus permanen?")) return;
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "hapus", id: id }) });
         location.reload();
     }
 </script>
 </body>
-
 </html>
-
